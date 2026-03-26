@@ -1,0 +1,17 @@
+#For Python:
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+#For the runtime generated data (created when the app runs): 
+chroma_db/
+piano_db
+
+#For MacOS: 
+.DS_Store
+
+#For the editor: 
+.vscode/
+.idea/

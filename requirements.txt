@@ -1,0 +1,18 @@
+#The core LangChain packages
+langchain-ollama
+langchain-chroma
+langchain-community
+langchain-text-splitters
+langchain-core
+
+#LangGraph for the agent graph 
+langgraph
+
+#For the vector store
+chromadb
+
+#For the wikipedia lookup
+wikipedia
+
+#The typing helpers
+typing-extensions
