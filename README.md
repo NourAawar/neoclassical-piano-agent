@@ -30,7 +30,32 @@ Ludovico Einaudi, Gibran Alcocer, Yann Tiersen, Virginio Aiello, and Max Richter
 - Ollama — local LLM server (qwen2.5 + nomic-embed-text)
 - Chroma — local vector store 
 - SQLite — structured database 
-- Docker — containerization 
+- Docker — containerization
+- GitHub Actions - CI/CD pipeline
+
+--- 
+
+## CI/CD Pipeline 
+
+This repo uses GitHub Actions to automatically build and push the Docker image to Docker Hub whenever a version tag is pushed. 
+
+**Trigger:** pushing a tag matching `v*` (e.g. `v1`, `v2`)
+
+**What it does:**
+1. Checks out the repository on a GitHub-hosted Ubuntu runner 
+2. Logs in to Docker Hub using encrypted GitHub Secrets 
+3. Generates image tags and labels from the git tag 
+4. Builds the Docker image using the Dockerfile 
+5. Pushes the image to Docker Hub as `username/piano-agent:v*` and `username/piano-agent:latest` 
+
+**To trigger the pipeline:** 
+```bash
+git tag v2 
+git push origin v2 
+```
+
+**No credentials are stored in the code.** Docker Hub username and access token are stored as encrypted GitHub Secrets and injected at runtime.
+
 
 ---
 
@@ -99,12 +124,15 @@ python piano_multi_agent.py
 ## Project structure
 ```
 neoclassical-piano-agent/
-├── piano_multi_agent.py   #main application
-├── piano_data.txt         #knowledge base for the RAG pipeline
-├── requirements.txt       #Python dependencies
-├── Dockerfile             #builds the app image
-├── .dockerignore          #excludes unnecessary files from the image
-├── docker-compose.yml     #defines services, network, and volumes
-├── commands.sh            #documented terminal commands to run both ways
+├── .github/
+│   └── workflows/
+│       └── docker-publish.yml  #GitHub Actions CI/CD workflow
+├── piano_multi_agent.py        #main application
+├── piano_data.txt              #knowledge base for the RAG pipeline
+├── requirements.txt            #Python dependencies
+├── Dockerfile                  #builds the app image
+├── .dockerignore               #excludes unnecessary files from the image
+├── docker-compose.yml          #defines services, network, and volumes
+├── commands.sh                 #documented terminal commands to run both ways
 └── .gitignore
 ```
