@@ -1,0 +1,28 @@
+# .dockerignore tells Docker which files to exclude from the build context. 
+# When we run "docker build .", Docker sends all files in the current folder to the Docker daemon. 
+# .dockerignore prevents unnecessary files from being sent, which makes builds faster and keeps the image clean. 
+
+# Python folders and files: 
+__pycache__/
+*.pyc 
+*.pyo
+*.pyd
+
+# Virtual environment: 
+venv/
+.venv/
+
+# Vectorstore and SQLite database: 
+chroma_db/ 
+piano_db
+
+# Git history: 
+.git/
+.gitignore 
+
+# MacOS: 
+.DS_Store
+
+# IDE and editor configuration folders: 
+.vscode/
+.idea/

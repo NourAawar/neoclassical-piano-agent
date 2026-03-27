@@ -1,0 +1,101 @@
+#This file defines our entire multi-container application. 
+#Instead of running docker commands one by one, Compose reads this file and does everything automatically with one command which is: 
+#docker compose up 
+#By does everything, we mean that it creates the network, builds the image, starts both containers, mounts the volumes, and passes 
+#environment variables (all together). 
+
+#First, we declare which Docker Compose file format specification we use. 
+version: "3.8"
+
+#Here we have the services section where we define each container in our application. 
+#Each entry becomes one container when Compose runs. 
+services: 
+
+  #ollama: this service runs the Ollama LLM server. It serves qwen2.5 and nomic-embed-text over HTTP on port 11434. 
+  #The Python app calls it to generate responses and to create vector store embeddings. 
+  ollama: 
+    #we use a pre-built image from Docker Hub instead of building one from Dockerfile 
+    image: ollama/ollama:latest 
+
+    #we give the container a fixed name, which becomes the DNS hostname that other containers on the same network use to reach 
+    #this service 
+    container_name: ollama
+
+    #we map the port on the host to the port inside the container
+    ports: 
+      - "11434:11434"
+
+    #we mount the volume to persist data across container restarts 
+    volumes: 
+      - ollama_data:/root/.ollama
+    
+    #if the container stops, restart defines what we should do, which in this case is restart (not when we explicitly stop it though)
+    restart: unless-stopped
+
+    #we connect this container to our custom network 
+    networks: 
+      - piano-network 
+    
+  #piano-app: this service runs the Python multi-agent application. 
+  piano-app: 
+    #we build this image using Dockerfile instead of using a pre-built one from Docker Hub
+    build: 
+      context: . 
+      dockerfile: Dockerfile 
+      
+    #we give the container a fixed name
+    container_name: piano-app
+
+    #we set an environment to pass environment variables at runtime 
+    environment: 
+      - OLLAMA_HOST=http://ollama:11434
+      
+    #we keep the STDIN open so the container accepts keyboard input 
+    #this is equivalent to the -i flag ("interactive") in "docker run -i"
+    #without this, input() would immediately receive EOF (no input stream)
+    stdin_open: true
+
+    #tty allocates a pseudo-terminal (TTY) for the container 
+    #this is equivalent to the -t flag ("tty") in "docker run -t"
+    #without this, the output doesn't render properly 
+    tty: true 
+
+    #here we have volume mounts named volumes for runtime generated data 
+    #these named volumes persist even when the container is stopped or removed 
+    volumes: 
+      - chroma_data:/app/chroma_db
+      - piano_db_data:/app/piano_db
+    
+    #this tells Compose to start the ollama service before piano-app services
+    depends_on:
+      - ollama
+    
+    #it connects to the same network as Ollama so that they can communicate 
+    networks: 
+      - piano-network 
+
+    #we restart automatically in case it crashes 
+    restart: unless-stopped 
+
+#Now we have the volumes section. This section names all the volumes declared by the services. 
+#These volumes are stored and managed by Docker outside the container filesystem. 
+#Their main advantage is that they persist across the stoppage or removal of containers. 
+volumes: 
+  #this stores Ollama's downloaded model weights 
+  ollama_data: 
+
+  #this stores the Chroma vector store index built from piano_data.txt
+  chroma_data: 
+
+  #this stores the SQLite database 
+  piano_db_data: 
+
+#Next is the networks section. This section declares the custom network that the containers share. 
+networks: 
+  piano-network: 
+    #here we isolate this app from other Docker apps on the machine 
+    #we do so by creating a private virtual network on the machine (containers on the same bridge network can reach each other 
+    #by name)
+    driver: bridge
+
+
